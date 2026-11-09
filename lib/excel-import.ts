@@ -55,6 +55,7 @@ export async function parseAndValidateStudentExcel(fileBuffer: Buffer): Promise<
 
   const rows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
   const classes = await getClasses();
+  const sections = await getSections();
   const currentSession = await getCurrentAcademicSession();
 
   const classMap = new Map<string, string>();
@@ -91,7 +92,11 @@ export async function parseAndValidateStudentExcel(fileBuffer: Buffer): Promise<
     const classId = classMap.get(normalizedClass) || classes[0].id;
 
     const rawSection = String(row["Section"] || "A").trim().toUpperCase() || "A";
-    const sectionId = `sec-${normalizedClass.toLowerCase().replace(/[^a-z0-9]/g, "")}-${rawSection.toLowerCase()}`;
+    const matchingSection =
+      sections.find((s) => s.classId === classId && s.name.toUpperCase() === rawSection) ||
+      sections.find((s) => s.classId === classId) ||
+      sections[0];
+    const sectionId = matchingSection.id;
 
     // Calculate Roll Number
     const classSecKey = `${classId}-${rawSection}`;
@@ -124,7 +129,7 @@ export async function parseAndValidateStudentExcel(fileBuffer: Buffer): Promise<
       casteCategory: String(row["Caste Category"] || row["Caste"] || "GEN").trim().toUpperCase(),
       studentType: String(row["Student Type"] || "Day Scholar").trim(),
       classId,
-      sectionId: `sec-${normalizedClass.toLowerCase().replace(/[^a-z0-9]/g, "")}-a`,
+      sectionId,
       academicSessionId: currentSession.id,
       isActive: true,
       createdAt: new Date().toISOString(),
