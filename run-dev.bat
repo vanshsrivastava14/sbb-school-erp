@@ -1,0 +1,3 @@
+@echo off
+echo Starting S.B.B Children School ERP Development Server...
+npm.cmd run dev
