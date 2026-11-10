@@ -333,3 +333,22 @@ export async function syncTeacherAssignmentToSupabase(ta: TeacherAssignment): Pr
     console.error("Supabase assignment sync error:", err);
   }
 }
+
+export async function syncUserToSupabase(user: User): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) return;
+
+  try {
+    await supabase.from("users").upsert({
+      id: user.id,
+      email: user.email,
+      password_hash: user.passwordHash,
+      full_name: user.fullName,
+      role: user.role,
+      phone: user.phone || null,
+      is_active: user.isActive,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" });
+  } catch (err) {
+    console.error("Supabase user sync error:", err);
+  }
+}

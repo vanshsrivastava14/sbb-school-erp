@@ -29,6 +29,7 @@ import {
   syncStudentToSupabase,
   syncClassToSupabase,
   syncTeacherAssignmentToSupabase,
+  syncUserToSupabase,
 } from "../supabase/store";
 
 export interface DatabaseState {
@@ -133,9 +134,48 @@ export async function getAllUsers(): Promise<User[]> {
 
 export async function createUser(user: User): Promise<User> {
   const db = await getDb();
+  if (db.users.some((u) => u.email.toLowerCase() === user.email.toLowerCase().trim())) {
+    throw new Error(`User with email '${user.email}' already exists.`);
+  }
   db.users.push(user);
   await saveDb(db);
+  syncUserToSupabase(user).catch(console.error);
   return user;
+}
+
+export async function updateUser(id: string, updates: Partial<User>): Promise<User> {
+  const db = await getDb();
+  const idx = db.users.findIndex((u) => u.id === id);
+  if (idx === -1) {
+    throw new Error(`User not found.`);
+  }
+
+  // If changing email, check uniqueness
+  if (updates.email && updates.email.toLowerCase().trim() !== db.users[idx].email.toLowerCase().trim()) {
+    const emailExists = db.users.some(
+      (u) => u.id !== id && u.email.toLowerCase().trim() === updates.email!.toLowerCase().trim()
+    );
+    if (emailExists) {
+      throw new Error(`User with email '${updates.email}' already exists.`);
+    }
+  }
+
+  db.users[idx] = {
+    ...db.users[idx],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveDb(db);
+  syncUserToSupabase(db.users[idx]).catch(console.error);
+  return db.users[idx];
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const db = await getDb();
+  db.users = db.users.filter((u) => u.id !== id);
+  db.teacherAssignments = db.teacherAssignments.filter((ta) => ta.teacherId !== id);
+  await saveDb(db);
 }
 
 // -------------------------------------------------------------

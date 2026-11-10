@@ -9,6 +9,7 @@ export interface User {
   phone?: string;
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AcademicSession {
