@@ -21,6 +21,15 @@ import {
   getGradeFromPercentage,
   calculateClassRanks,
 } from "../grading";
+import { isSupabaseConfigured } from "../supabase/client";
+import {
+  fetchFromSupabase,
+  syncMarksToSupabase,
+  syncReportCardsToSupabase,
+  syncStudentToSupabase,
+  syncClassToSupabase,
+  syncTeacherAssignmentToSupabase,
+} from "../supabase/store";
 
 export interface DatabaseState {
   academicSessions: AcademicSession[];
@@ -46,6 +55,16 @@ export async function getDb(): Promise<DatabaseState> {
     return memoryDb;
   }
 
+  // 1. If Supabase is configured, pull live state from Cloud PostgreSQL
+  if (isSupabaseConfigured) {
+    const cloudDb = await fetchFromSupabase();
+    if (cloudDb && cloudDb.classes.length > 0) {
+      memoryDb = cloudDb;
+      return memoryDb;
+    }
+  }
+
+  // 2. Otherwise use local JSON database file
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
@@ -81,12 +100,17 @@ export async function getDb(): Promise<DatabaseState> {
 
 export async function saveDb(state: DatabaseState): Promise<void> {
   memoryDb = state;
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tempFile, JSON.stringify(state, null, 2), "utf-8");
+    fs.renameSync(tempFile, DB_FILE);
+  } catch (err) {
+    // In read-only serverless platforms like Vercel, local disk writes are ignored
+    console.warn("Local filesystem write skipped (serverless environment):", err);
   }
-  const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
-  fs.writeFileSync(tempFile, JSON.stringify(state, null, 2), "utf-8");
-  fs.renameSync(tempFile, DB_FILE);
 }
 
 // -------------------------------------------------------------
@@ -141,10 +165,12 @@ export async function createClass(cls: SchoolClass): Promise<SchoolClass> {
   db.classes.push(cls);
   // Create Section A for this class automatically
   const sectionId = `sec-${cls.code.toLowerCase().replace(/[^a-z0-9]/g, "")}-a`;
+  const newSection = { id: sectionId, name: "A", classId: cls.id };
   if (!db.sections.some((s) => s.id === sectionId)) {
-    db.sections.push({ id: sectionId, name: "A", classId: cls.id });
+    db.sections.push(newSection);
   }
   await saveDb(db);
+  syncClassToSupabase(cls, newSection).catch(console.error);
   return cls;
 }
 
@@ -169,14 +195,16 @@ export async function setClassTeacher(classId: string, sectionId: string, teache
     (ta) => !(ta.classId === classId && ta.sectionId === sectionId && ta.isClassTeacher)
   );
   if (teacherId) {
-    db.teacherAssignments.push({
+    const newAssignment = {
       id: `assign-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       teacherId,
       classId,
       sectionId,
       subjectId: null,
       isClassTeacher: true,
-    });
+    };
+    db.teacherAssignments.push(newAssignment);
+    syncTeacherAssignmentToSupabase(newAssignment).catch(console.error);
   }
   await saveDb(db);
 }
@@ -288,6 +316,7 @@ export async function createStudent(student: Student): Promise<Student> {
   }
   db.students.push(student);
   await saveDb(db);
+  syncStudentToSupabase(student).catch(console.error);
   return student;
 }
 
@@ -305,6 +334,7 @@ export async function updateStudent(id: string, updates: Partial<Student>): Prom
 
   db.students[idx] = { ...db.students[idx], ...updates };
   await saveDb(db);
+  syncStudentToSupabase(db.students[idx]).catch(console.error);
   return db.students[idx];
 }
 
@@ -422,6 +452,7 @@ export async function saveMarksEntries(
   // Auto-compile report cards for the affected students so they reflect marks immediately
   const studentIds = Array.from(new Set(entries.map((e) => e.studentId)));
   const sessionId = entries[0]?.academicSessionId || "session-2025-2026";
+  syncMarksToSupabase(db.marks.filter((m) => studentIds.includes(m.studentId))).catch(console.error);
   for (const sId of studentIds) {
     try {
       await compileStudentReportCard(sId, sessionId);
@@ -601,6 +632,7 @@ export async function compileStudentReportCard(
   }
 
   await saveDb(db);
+  syncReportCardsToSupabase([reportCard]).catch(console.error);
   return reportCard;
 }
 
