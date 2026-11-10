@@ -32,10 +32,14 @@ function LoginForm() {
   const handleTabChange = (tab: "teacher" | "admin") => {
     setActiveTab(tab);
     setError(null);
-    if (tab === "admin" && !email) {
+    if (tab === "admin") {
       setEmail("admin@sbbschool.com");
-    } else if (tab === "teacher" && email === "admin@sbbschool.com") {
-      setEmail("swati@sbbschool.com");
+      setPassword("admin123");
+    } else {
+      if (email === "admin@sbbschool.com") {
+        setEmail("swati@sbbschool.com");
+        setPassword("teacher123");
+      }
     }
   };
 

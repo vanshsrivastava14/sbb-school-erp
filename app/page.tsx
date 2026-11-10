@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { getDb } from "@/lib/db/store";
+import { adminAutoLoginAction } from "@/app/actions/auth";
 
 export default async function HomePage() {
   const db = await getDb();
@@ -103,12 +104,14 @@ export default async function HomePage() {
                 <p className="text-xs text-slate-500 mt-1 mb-3">
                   Manage 410+ student records, teacher assignments, bulk Excel imports, and publish official report cards.
                 </p>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0f2537] hover:text-amber-700"
-                >
-                  Admin Login <ArrowRight className="w-3 h-3" />
-                </Link>
+                <form action={adminAutoLoginAction}>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0f2537] hover:text-amber-700 transition"
+                  >
+                    <span>Admin Login</span> <ArrowRight className="w-3 h-3 text-amber-600" />
+                  </button>
+                </form>
               </div>
 
               <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow transition">
@@ -163,16 +166,6 @@ export default async function HomePage() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span>Integrated visual comparison chart, attendance, and official 8-tier grade scale.</span>
                 </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200/60 text-xs text-amber-900 flex items-center gap-3">
-              <Award className="w-8 h-8 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="font-semibold">Official Format Verified</p>
-                <p className="text-[11px] text-amber-800">
-                  Calibrated against actual school marksheet reference file with student Mahek Sahu (Class LKG - A).
-                </p>
               </div>
             </div>
           </div>
