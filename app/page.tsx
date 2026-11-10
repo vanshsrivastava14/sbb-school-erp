@@ -14,7 +14,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { getDb } from "@/lib/db/store";
-import { adminAutoLoginAction } from "@/app/actions/auth";
 
 export default async function HomePage() {
   const db = await getDb();
@@ -104,14 +103,12 @@ export default async function HomePage() {
                 <p className="text-xs text-slate-500 mt-1 mb-3">
                   Manage 410+ student records, teacher assignments, bulk Excel imports, and publish official report cards.
                 </p>
-                <form action={adminAutoLoginAction}>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0f2537] hover:text-amber-700 transition"
-                  >
-                    <span>Admin Login</span> <ArrowRight className="w-3 h-3 text-amber-600" />
-                  </button>
-                </form>
+                <Link
+                  href="/login?role=admin"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0f2537] hover:text-amber-700 transition"
+                >
+                  <span>Admin Login</span> <ArrowRight className="w-3 h-3 text-amber-600" />
+                </Link>
               </div>
 
               <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow transition">

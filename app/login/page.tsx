@@ -20,9 +20,10 @@ import {
 function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("from") || "";
+  const initialRole = searchParams.get("role") === "admin" ? "admin" : "teacher";
 
-  const [activeTab, setActiveTab] = useState<"teacher" | "admin">("teacher");
-  const [email, setEmail] = useState("");
+  const [activeTab, setActiveTab] = useState<"teacher" | "admin">(initialRole);
+  const [email, setEmail] = useState(initialRole === "admin" ? "admin@sbbschool.com" : "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,13 +33,12 @@ function LoginForm() {
   const handleTabChange = (tab: "teacher" | "admin") => {
     setActiveTab(tab);
     setError(null);
+    setPassword(""); // ALWAYS clear password on tab switch for safety
     if (tab === "admin") {
       setEmail("admin@sbbschool.com");
-      setPassword("admin123");
     } else {
       if (email === "admin@sbbschool.com") {
-        setEmail("swati@sbbschool.com");
-        setPassword("teacher123");
+        setEmail("");
       }
     }
   };
@@ -206,53 +206,15 @@ function LoginForm() {
           </button>
         </form>
 
-        {/* Discreet Credentials Reference Toggle */}
-        <div className="mt-6 pt-4 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => setShowCredentialsHelp(!showCredentialsHelp)}
-            className="w-full text-center text-[11px] text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 transition"
-          >
-            <Info className="w-3.5 h-3.5 text-amber-600" />
-            <span>Need login credentials or authorized accounts reference?</span>
-          </button>
-
-          {showCredentialsHelp && (
-            <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-600 text-[11px] space-y-2 animate-in fade-in duration-150">
-              <div className="font-bold text-slate-800 border-b border-slate-200 pb-1">
-                Authorized School Logins:
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div
-                  onClick={() => {
-                    setEmail("admin@sbbschool.com");
-                    setPassword("admin123");
-                    setActiveTab("admin");
-                  }}
-                  className="p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-amber-400 transition"
-                >
-                  <p className="font-bold text-[#0f2537]">Principal (Admin)</p>
-                  <p className="font-mono text-[10px] text-slate-500">admin@sbbschool.com</p>
-                  <p className="text-[10px] text-amber-700 font-semibold">Pass: admin123</p>
-                </div>
-                <div
-                  onClick={() => {
-                    setEmail("swati@sbbschool.com");
-                    setPassword("teacher123");
-                    setActiveTab("teacher");
-                  }}
-                  className="p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-sky-400 transition"
-                >
-                  <p className="font-bold text-[#0f2537]">Class Teacher (Swati)</p>
-                  <p className="font-mono text-[10px] text-slate-500">swati@sbbschool.com</p>
-                  <p className="text-[10px] text-sky-700 font-semibold">Pass: teacher123</p>
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-400 italic">
-                All 12 class teachers log in with their email and password <code className="text-slate-600 font-semibold">teacher123</code>. Passwords can be changed by the admin anytime in Teacher Management.
-              </p>
-            </div>
-          )}
+        {/* Security & Access Notice */}
+        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+          <p className="text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+            <span>Strict Access Control • Authentication Required</span>
+          </p>
+          <p className="text-[10px] text-slate-400 mt-1">
+            All portal sessions are encrypted and activity is auditable. For credentials or password recovery, contact the School Administrative Office.
+          </p>
         </div>
       </div>
 
