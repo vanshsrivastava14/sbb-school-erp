@@ -1353,7 +1353,7 @@
     {
       "id": "user-admin-1",
       "email": "admin@sbbschool.com",
-      "passwordHash": "$2b$10$qgp4WQAKoGRkTvNIDXg.P.dW3swrtaXNRr1uC7O1jYR6/GTfPmBMy",
+      "passwordHash": "$2b$10$Jk68eG7UKptHSWTjDNSd1OqYvC.g9Qy90BHNG3IXi1Wrg72I5a3QK",
       "fullName": "Principal S.B.B Children School",
       "role": "admin",
       "phone": "9451275030",
@@ -1364,7 +1364,7 @@
     {
       "id": "user-teacher-swati",
       "email": "swati@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Swati (Class Teacher)",
       "role": "teacher",
       "phone": "9792066753",
@@ -1375,7 +1375,7 @@
     {
       "id": "user-teacher-sunita",
       "email": "sunita@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Sunita Sharma",
       "role": "teacher",
       "phone": "9838000003",
@@ -1386,7 +1386,7 @@
     {
       "id": "user-teacher-manoj",
       "email": "manoj@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Manoj Singh",
       "role": "teacher",
       "phone": "9838000004",
@@ -1397,7 +1397,7 @@
     {
       "id": "user-teacher-priya",
       "email": "priya@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Priya Mishra",
       "role": "teacher",
       "phone": "9838000005",
@@ -1408,7 +1408,7 @@
     {
       "id": "user-teacher-rajesh",
       "email": "rajesh@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Rajesh Yadav",
       "role": "teacher",
       "phone": "9838000006",
@@ -1419,7 +1419,7 @@
     {
       "id": "user-teacher-anita",
       "email": "anita@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Anita Gupta",
       "role": "teacher",
       "phone": "9838000007",
@@ -1430,7 +1430,7 @@
     {
       "id": "user-teacher-dharmendra",
       "email": "dharmendra@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Dharmendra Kumar",
       "role": "teacher",
       "phone": "9838000008",
@@ -1441,7 +1441,7 @@
     {
       "id": "user-teacher-rekha",
       "email": "rekha@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Rekha Patel",
       "role": "teacher",
       "phone": "9838000009",
@@ -1452,7 +1452,7 @@
     {
       "id": "user-teacher-suresh",
       "email": "suresh@sbbschool.com",
-      "passwordHash": "$2b$10$0mVFhGuCPLeP49RH/nPNcelSmPvcz5V6DzA5NWzmMIj20zluSSc/W",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "Suresh Pandey",
       "role": "teacher",
       "phone": "9838000010",
@@ -1463,7 +1463,7 @@
     {
       "id": "user-teacher-ramesh",
       "email": "gudia@sbbschool.com",
-      "passwordHash": "$2b$10$GgwnaORfBhMbooHO7eNFduUT814hVpMJqucl7w6okZBouOwWdYY86",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "GUDIA Ma'am",
       "role": "teacher",
       "phone": "9198000000",
@@ -1474,7 +1474,7 @@
     {
       "id": "user-teacher-anjali",
       "email": "pushpa@sbbschool.com",
-      "passwordHash": "$2b$10$tm4Z1JENFaBcOHtbX/TjOegbJwuc68wWR6d.rRIyxkCSdWgbGPzMW",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "PUSHPA MA'AM",
       "role": "teacher",
       "phone": "9838000001",
@@ -1485,7 +1485,7 @@
     {
       "id": "user-teacher-pooja",
       "email": "ashfia@sbbschool.com",
-      "passwordHash": "$2b$10$BWyAWvY01S/cUs4j07KSs.PqejgUR4biTAm2LnDkjPOgmCJ4lk3Hi",
+      "passwordHash": "$2b$10$hRaGyMc7lr1Hrm3atdC9feDA7svkCfl8y84NcEPexVWix1qFTjRWO",
       "fullName": "ASHFIA MA'AM",
       "role": "teacher",
       "phone": "9838000002",
