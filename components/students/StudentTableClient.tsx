@@ -66,7 +66,7 @@ export default function StudentTableClient({
         s.studentName.toLowerCase().includes(q) ||
         s.admissionNo.toLowerCase().includes(q) ||
         s.fatherName.toLowerCase().includes(q) ||
-        s.mobile.includes(q)
+        (s.mobile && s.mobile.includes(q))
       );
     }
     return true;
@@ -311,7 +311,7 @@ export default function StudentTableClient({
                       <div className="text-[10px] text-slate-400">{student.motherName}</div>
                     </td>
                     <td className="py-3 px-3.5">
-                      <div className="text-slate-700 font-mono">{student.mobile}</div>
+                      <div className="text-slate-700 font-mono">{student.mobile || "—"}</div>
                       <div className="text-[10px] text-slate-400 truncate max-w-[180px]">{student.address}</div>
                     </td>
                     <td className="py-3 px-3.5 text-right">

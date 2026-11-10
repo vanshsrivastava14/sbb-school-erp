@@ -123,7 +123,7 @@ export async function parseAndValidateStudentExcel(fileBuffer: Buffer): Promise<
       aadharNo: String(row["AadharNo"] || "").trim(),
       fatherName: fatherName ? (fatherName.startsWith("MR") ? fatherName : `MR. ${fatherName}`) : "MR. N/A",
       motherName: motherName ? (motherName.startsWith("MRS") ? motherName : `MRS. ${motherName}`) : "MRS. N/A",
-      mobile: mobile || "9451275030",
+      mobile: mobile || "",
       address: address || "KUNDA PRATAPGARH",
       religion: String(row["Religion"] || "Hindu").trim(),
       casteCategory: String(row["Caste Category"] || row["Caste"] || "GEN").trim().toUpperCase(),

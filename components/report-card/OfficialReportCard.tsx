@@ -302,7 +302,7 @@ export default function OfficialReportCard({
                     </div>
                     <div className="flex">
                       <span className="w-24 text-slate-800">MOBILE NO :</span>
-                      <span className="text-black font-mono">{student.mobile}</span>
+                      <span className="text-black font-mono">{student.mobile || "-"}</span>
                     </div>
                     <div className="flex">
                       <span className="w-24 text-slate-800">DOB :</span>
