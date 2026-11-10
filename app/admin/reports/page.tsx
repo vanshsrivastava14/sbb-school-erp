@@ -5,13 +5,14 @@ import { FileText, Eye, Printer, Award, Search, CheckCircle2 } from "lucide-reac
 export default async function AdminReportsListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ classId?: string; search?: string }>;
+  searchParams: Promise<{ classId?: string; search?: string; sessionId?: string }>;
 }) {
   const db = await getDb();
   const classes = await getClasses();
   const currentSession = await getCurrentAcademicSession();
   const params = await searchParams;
 
+  const selectedSessionId = params.sessionId || currentSession.id;
   const selectedClassId = params.classId || classes[1]?.id || classes[0]?.id; // Default to LKG (index 1)
   const searchQuery = (params.search || "").toLowerCase().trim();
 
@@ -21,7 +22,7 @@ export default async function AdminReportsListPage({
     return s.studentName.toLowerCase().includes(searchQuery) || s.admissionNo.includes(searchQuery);
   });
 
-  const reportCards = db.reportCards.filter((rc) => rc.academicSessionId === currentSession.id);
+  const reportCards = db.reportCards.filter((rc) => rc.academicSessionId === selectedSessionId);
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
   return (
@@ -35,6 +36,22 @@ export default async function AdminReportsListPage({
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="flex items-center bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+            {db.academicSessions.map((sess) => (
+              <Link
+                key={sess.id}
+                href={`/admin/reports?classId=${selectedClassId}&sessionId=${sess.id}`}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  selectedSessionId === sess.id
+                    ? "bg-[#0f2537] text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {sess.name} {sess.isCurrent ? "★ Active" : "(Archived)"}
+              </Link>
+            ))}
+          </div>
+
           <Link
             href="/admin/marks"
             className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
@@ -53,7 +70,7 @@ export default async function AdminReportsListPage({
           return (
             <Link
               key={cls.id}
-              href={`/admin/reports?classId=${cls.id}`}
+              href={`/admin/reports?classId=${cls.id}&sessionId=${selectedSessionId}`}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                 isSelected
                   ? "bg-[#0f2537] text-white shadow-xs"
@@ -142,7 +159,7 @@ export default async function AdminReportsListPage({
                       </td>
                       <td className="py-3 px-3.5 text-right">
                         <Link
-                          href={`/admin/reports/${student.id}`}
+                          href={`/admin/reports/${student.id}?sessionId=${selectedSessionId}`}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2537] hover:bg-[#183e60] text-white text-xs font-semibold rounded-lg transition shadow-xs"
                         >
                           <Eye className="w-3.5 h-3.5 text-amber-300" />

@@ -314,6 +314,12 @@ export default function OfficialReportCard({
                         {schoolClass.code === "LKG" ? "LKG - A" : schoolClass.code === "UKG" ? "UKG - A" : `${schoolClass.name} - A`}
                       </span>
                     </div>
+                    <div className="flex">
+                      <span className="w-24 text-slate-800">SESSION :</span>
+                      <span className="text-black uppercase font-semibold">
+                        {reportCard?.academicSessionId?.replace("session-", "") || "2026-2027"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
