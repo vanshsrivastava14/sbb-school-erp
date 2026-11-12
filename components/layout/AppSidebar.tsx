@@ -52,13 +52,13 @@ export default function AppSidebar({ role, isOpen, onClose }: AppSidebarProps) {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 md:hidden transition-opacity"
+          className="no-print print:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 md:hidden transition-opacity"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 w-64 bg-[#0f2537] text-slate-200 z-50 flex flex-col transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`no-print print:hidden fixed top-0 bottom-0 left-0 w-64 bg-[#0f2537] text-slate-200 z-50 flex flex-col transition-transform duration-300 md:static md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

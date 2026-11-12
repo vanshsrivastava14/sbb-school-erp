@@ -35,11 +35,19 @@ body {
 
 /* Print Stylesheet for Report Cards */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
   body {
-    background: transparent !important;
+    background: #ffffff !important;
     color: #000 !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 210mm !important;
+    height: auto !important;
   }
 
   .no-print {
@@ -56,11 +64,20 @@ body {
   }
 
   .report-card-page {
-    page-break-after: always;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
     box-shadow: none !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     width: 210mm !important;
-    height: 297mm !important;
+    height: 296mm !important;
+    min-height: 0 !important;
+    max-height: 296mm !important;
+    padding: 6mm !important;
+    overflow: hidden !important;
+  }
+
+  .report-card-page:not(:last-child) {
+    page-break-after: always !important;
   }
 }

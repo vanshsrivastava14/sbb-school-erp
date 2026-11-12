@@ -18,20 +18,20 @@ export default function TeacherShell({ user, currentSessionName, children }: Tea
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col print:min-h-0 print:bg-white print:block">
       <AppHeader
         user={user}
         currentSessionName={currentSessionName}
         onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         isMobileMenuOpen={isMobileMenuOpen}
       />
-      <div className="flex-1 flex flex-row">
+      <div className="flex-1 flex flex-row print:block">
         <AppSidebar
           role="teacher"
           isOpen={isMobileMenuOpen}
           onClose={() => setIsMobileMenuOpen(false)}
         />
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden print:p-0 print:m-0 print:max-w-none print:overflow-visible">
           {children}
         </main>
       </div>

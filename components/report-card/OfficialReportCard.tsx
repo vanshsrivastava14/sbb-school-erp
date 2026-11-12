@@ -118,7 +118,7 @@ export default function OfficialReportCard({
 
   // Chart Dimensions & Calculations
   const chartMax = 125;
-  const chartHeight = 110;
+  const chartHeight = 96;
   const chartWidth = 560;
 
   const handlePrint = () => {
@@ -126,7 +126,7 @@ export default function OfficialReportCard({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 print:space-y-0">
       {/* Action Toolbar (Hidden during Print) */}
       <div className="no-print bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -178,34 +178,35 @@ export default function OfficialReportCard({
           Double Border: Outer Gold, Inner Navy Blue.
           Exact replica of WhatsApp Image 2026-11-09 at 10.06.39 PM (1).jpeg
           ========================================================================= */}
-      <div className="flex justify-center p-0 sm:p-2 bg-slate-200/60 rounded-xl overflow-x-auto">
+      <div className="flex justify-center p-0 sm:p-2 bg-slate-200/60 rounded-xl overflow-x-auto print:p-0 print:m-0 print:bg-transparent print:rounded-none print:overflow-visible print:block">
         <div
           id="official-report-card-sheet"
-          className="report-card-page bg-[#fcfbf7] text-slate-900 shadow-2xl relative"
+          className="report-card-page bg-[#fcfbf7] text-slate-900 shadow-2xl relative print:shadow-none print:m-0"
           style={{
             width: "210mm",
-            minHeight: "297mm",
-            padding: "8mm",
+            minHeight: "296mm",
+            padding: "6mm",
             boxSizing: "border-box",
             fontFamily: "Arial, Helvetica, sans-serif",
           }}
         >
           {/* OUTER GOLDEN/YELLOW BORDER */}
           <div
-            className="w-full h-full relative"
+            className="w-full h-full relative flex flex-col"
             style={{
-              border: "6px solid #d4a742", // School golden frame
-              padding: "4px",
+              minHeight: "284mm",
+              border: "5px solid #d4a742", // School golden frame
+              padding: "3px",
               boxSizing: "border-box",
               backgroundColor: "#fcfbf7",
             }}
           >
             {/* INNER NAVY BLUE BORDER */}
             <div
-              className="w-full h-full relative flex flex-col justify-between"
+              className="w-full flex-1 relative flex flex-col justify-between gap-1"
               style={{
                 border: "2px solid #0f2537", // School navy inner frame
-                padding: "8px 12px",
+                padding: "6px 10px",
                 boxSizing: "border-box",
               }}
             >
@@ -218,22 +219,22 @@ export default function OfficialReportCard({
                   <Image
                     src="/images/school-emblem.png"
                     alt="Official Hologram Watermark"
-                    width={480}
-                    height={480}
+                    width={460}
+                    height={460}
                     className="object-contain"
                   />
                 </div>
               )}
 
               {/* 1. SCHOOL BRANDING HEADER */}
-              <div className="relative z-10 flex items-center justify-between pb-1.5 border-b-2 border-[#0f2537]">
+              <div className="relative z-10 flex items-center justify-between pb-1 border-b-2 border-[#0f2537]">
                 {/* School Emblem (Left) */}
-                <div className="w-[84px] h-[84px] relative flex-shrink-0">
+                <div className="w-[74px] h-[74px] relative flex-shrink-0">
                   <Image
                     src="/images/school-emblem.png"
                     alt="S.B.B Children School Emblem"
-                    width={84}
-                    height={84}
+                    width={74}
+                    height={74}
                     priority
                     className="object-contain"
                   />
@@ -242,33 +243,33 @@ export default function OfficialReportCard({
                 {/* School Name & Official Details (Center) */}
                 <div className="text-center flex-1 px-2">
                   <h1
-                    className="font-bold text-[#0f2537] tracking-tight uppercase"
-                    style={{ fontSize: "22px", fontFamily: "'Times New Roman', Times, serif" }}
+                    className="font-bold text-[#0f2537] tracking-tight uppercase leading-tight"
+                    style={{ fontSize: "21px", fontFamily: "'Times New Roman', Times, serif" }}
                   >
                     SBB CHILDREN SCHOOL
                   </h1>
-                  <p className="text-[12px] font-semibold text-slate-800 tracking-wide mt-0.5">
+                  <p className="text-[11.5px] font-semibold text-slate-800 tracking-wide mt-0.5">
                     Add.- Gandhi Nagar Kunda PBH.
                   </p>
-                  <p className="text-[11px] font-medium text-slate-700">
+                  <p className="text-[10.5px] font-medium text-slate-700">
                     Mobile- 9451275030, 9792066753
                   </p>
-                  <p className="text-[11px] font-medium text-slate-700">
+                  <p className="text-[10.5px] font-medium text-slate-700">
                     Mail- sbbkunda@gmail.com
                   </p>
                 </div>
 
                 {/* Student Photo Placeholder Box (Right) */}
                 <div
-                  className="w-[74px] h-[92px] border border-slate-700 flex flex-col items-center justify-center bg-slate-100 flex-shrink-0 text-slate-400 text-[10px] text-center p-1"
+                  className="w-[68px] h-[82px] border border-slate-700 flex flex-col items-center justify-center bg-slate-100 flex-shrink-0 text-slate-400 text-[10px] text-center p-1"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-300 mb-1" />
+                  <div className="w-7 h-7 rounded-full bg-slate-300 mb-1" />
                   <span className="font-semibold text-[9px] uppercase">Photo</span>
                 </div>
               </div>
 
               {/* 2. STUDENT PROFILE METADATA SECTION (2-Column Exact Layout) */}
-              <div className="relative z-10 text-[11px] font-bold text-slate-900 py-1.5 leading-snug">
+              <div className="relative z-10 text-[10.5px] font-bold text-slate-900 py-1 leading-tight">
                 <div className="grid grid-cols-12 gap-x-2">
                   {/* Left Column */}
                   <div className="col-span-7 space-y-0.5">
@@ -358,32 +359,32 @@ export default function OfficialReportCard({
                   <tbody>
                     {subjectData.map((sub, idx) => (
                       <tr key={idx} className="border-b border-slate-400 font-medium text-slate-900">
-                        <td className="border-r border-slate-700 py-1 px-1.5 text-left font-bold uppercase">
+                        <td className="border-r border-slate-700 py-0.5 px-1.5 text-left font-bold uppercase">
                           {sub.name}
                         </td>
-                        <td className="border-r border-slate-700 py-1">{sub.ut1}</td>
-                        <td className="border-r border-slate-700 py-1">{sub.halfYearly}</td>
-                        <td className="border-r border-slate-700 py-1 font-bold bg-[#f5f3ec]">{sub.term1}</td>
-                        <td className="border-r border-slate-700 py-1">{sub.ut2}</td>
-                        <td className="border-r border-slate-700 py-1">{sub.annual}</td>
-                        <td className="border-r border-slate-700 py-1 font-bold bg-[#f5f3ec]">{sub.term2}</td>
-                        <td className="border-r border-slate-700 py-1 font-bold">{sub.grandTotal}</td>
-                        <td className="py-1 font-bold">{sub.grade}</td>
+                        <td className="border-r border-slate-700 py-0.5">{sub.ut1}</td>
+                        <td className="border-r border-slate-700 py-0.5">{sub.halfYearly}</td>
+                        <td className="border-r border-slate-700 py-0.5 font-bold bg-[#f5f3ec]">{sub.term1}</td>
+                        <td className="border-r border-slate-700 py-0.5">{sub.ut2}</td>
+                        <td className="border-r border-slate-700 py-0.5">{sub.annual}</td>
+                        <td className="border-r border-slate-700 py-0.5 font-bold bg-[#f5f3ec]">{sub.term2}</td>
+                        <td className="border-r border-slate-700 py-0.5 font-bold">{sub.grandTotal}</td>
+                        <td className="py-0.5 font-bold">{sub.grade}</td>
                       </tr>
                     ))}
                     {/* TOTAL ROW */}
                     <tr className="bg-[#eae7df] font-bold text-black border-t border-slate-700">
-                      <td className="border-r border-slate-700 py-1 px-1.5 text-center uppercase">
+                      <td className="border-r border-slate-700 py-0.5 px-1.5 text-center uppercase">
                         Total
                       </td>
-                      <td className="border-r border-slate-700 py-1">{cumulativeUt1}</td>
-                      <td className="border-r border-slate-700 py-1">{cumulativeHalfYearly}</td>
-                      <td className="border-r border-slate-700 py-1 bg-[#dedad1]">{cumulativeTerm1Total}</td>
-                      <td className="border-r border-slate-700 py-1">{cumulativeUt2}</td>
-                      <td className="border-r border-slate-700 py-1">{cumulativeAnnual}</td>
-                      <td className="border-r border-slate-700 py-1 bg-[#dedad1]">{cumulativeTerm2Total}</td>
-                      <td className="border-r border-slate-700 py-1 text-black font-extrabold">{cumulativeGrandTotal}</td>
-                      <td className="py-1">-</td>
+                      <td className="border-r border-slate-700 py-0.5">{cumulativeUt1}</td>
+                      <td className="border-r border-slate-700 py-0.5">{cumulativeHalfYearly}</td>
+                      <td className="border-r border-slate-700 py-0.5 bg-[#dedad1]">{cumulativeTerm1Total}</td>
+                      <td className="border-r border-slate-700 py-0.5">{cumulativeUt2}</td>
+                      <td className="border-r border-slate-700 py-0.5">{cumulativeAnnual}</td>
+                      <td className="border-r border-slate-700 py-0.5 bg-[#dedad1]">{cumulativeTerm2Total}</td>
+                      <td className="border-r border-slate-700 py-0.5 text-black font-extrabold">{cumulativeGrandTotal}</td>
+                      <td className="py-0.5">-</td>
                     </tr>
                   </tbody>
                 </table>
@@ -492,7 +493,7 @@ export default function OfficialReportCard({
               </div>
 
               {/* 6. SUBJECT PERFORMANCE CLUSTERED BAR CHART */}
-              <div className="relative z-10 border border-slate-700 bg-white p-2">
+              <div className="relative z-10 border border-slate-700 bg-white p-1.5">
                 {/* Chart Header & Legend */}
                 <div className="flex items-center justify-center gap-6 mb-1 text-[9px] font-bold">
                   <div className="flex items-center gap-1.5">
@@ -619,7 +620,7 @@ export default function OfficialReportCard({
               <div className="relative z-10 border border-slate-700 bg-white">
                 <div className="grid grid-cols-3 text-center text-[10px] font-bold text-slate-800 divide-x divide-slate-700">
                   {["Parent's Signature", "Class Teacher's Signature", "Principal"].map((label) => (
-                    <div key={label} className="p-2 pt-9 flex flex-col justify-end">
+                    <div key={label} className="p-1.5 pt-8 flex flex-col justify-end">
                       <div className="border-t border-slate-400 pt-1">{label}</div>
                     </div>
                   ))}
