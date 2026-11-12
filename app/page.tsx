@@ -101,7 +101,7 @@ export default async function HomePage() {
                 </div>
                 <h3 className="text-sm font-bold text-slate-800">Administrative Portal</h3>
                 <p className="text-xs text-slate-500 mt-1 mb-3">
-                  Manage 410+ student records, teacher assignments, bulk Excel imports, and publish official report cards.
+                  Manage student records, separate H.M / E.M class teachers, exam filling sheets, and official report cards.
                 </p>
                 <Link
                   href="/login?role=admin"

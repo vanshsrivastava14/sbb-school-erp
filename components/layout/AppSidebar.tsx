@@ -13,6 +13,7 @@ import {
   Settings,
   ChevronRight,
   ClipboardEdit,
+  ClipboardList,
   Send,
   X,
 } from "lucide-react";
@@ -28,10 +29,11 @@ export default function AppSidebar({ role, isOpen, onClose }: AppSidebarProps) {
 
   const adminLinks = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { label: "Students (410+)", href: "/admin/students", icon: Users },
+    { label: "Students Roster", href: "/admin/students", icon: Users },
     { label: "Teachers & Staff", href: "/admin/teachers", icon: GraduationCap },
     { label: "Classes & Subjects", href: "/admin/classes", icon: Layers },
     { label: "Marks Management", href: "/admin/marks", icon: FileSpreadsheet },
+    { label: "Exam Filling Sheets", href: "/admin/marks-sheets", icon: ClipboardList },
     { label: "Report Cards", href: "/admin/reports", icon: FileText },
     { label: "Audit Logs", href: "/admin/audit", icon: History },
   ];
@@ -40,6 +42,7 @@ export default function AppSidebar({ role, isOpen, onClose }: AppSidebarProps) {
     { label: "Teacher Dashboard", href: "/teacher", icon: LayoutDashboard },
     { label: "My Classes & Students", href: "/teacher/classes", icon: Users },
     { label: "Marks Entry", href: "/teacher/marks", icon: ClipboardEdit },
+    { label: "Exam Filling Sheets", href: "/teacher/marks-sheets", icon: ClipboardList },
     { label: "My Submissions", href: "/teacher/submissions", icon: Send },
     { label: "Report Cards Preview", href: "/teacher/reports", icon: FileText },
   ];
@@ -86,7 +89,7 @@ export default function AppSidebar({ role, isOpen, onClose }: AppSidebarProps) {
             const isActive =
               link.href === "/admin" || link.href === "/teacher"
                 ? pathname === link.href
-                : pathname.startsWith(link.href);
+                : pathname === link.href || pathname.startsWith(link.href + "/");
 
             return (
               <Link

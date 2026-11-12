@@ -80,4 +80,32 @@ body {
   .report-card-page:not(:last-child) {
     page-break-after: always !important;
   }
+
+  @page filling-sheet {
+    size: A4 portrait;
+    margin: 7mm 8mm;
+  }
+
+  .marks-filling-sheet {
+    page: filling-sheet;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .marks-filling-sheet:not(:last-child) {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .marks-filling-table thead {
+    display: table-header-group !important;
+  }
+
+  .marks-filling-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 }

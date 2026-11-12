@@ -296,7 +296,7 @@ export async function syncStudentToSupabase(st: Student): Promise<void> {
   };
 
   try {
-    await supabase.from("students").upsert(row, { onConflict: "admission_no" });
+    await supabase.from("students").upsert(row, { onConflict: "id" });
   } catch (err) {
     console.error("Supabase student sync error:", err);
   }

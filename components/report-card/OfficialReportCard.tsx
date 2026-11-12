@@ -299,7 +299,7 @@ export default function OfficialReportCard({
                   <div className="col-span-5 space-y-0.5 pl-4">
                     <div className="flex">
                       <span className="w-24 text-slate-800">ROLL NO. :</span>
-                      <span className="text-black">{student.rollNo}</span>
+                      <span className="text-black">{student.rollNo > 0 ? student.rollNo : "-"}</span>
                     </div>
                     <div className="flex">
                       <span className="w-24 text-slate-800">MOBILE NO :</span>

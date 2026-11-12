@@ -291,16 +291,17 @@ export async function addClassSubject(cs: ClassSubject): Promise<ClassSubject> {
 
 export async function setClassTeacher(classId: string, sectionId: string, teacherId: string): Promise<void> {
   const db = await getDb();
-  // Remove existing class teacher assignment for this class and section
+  const actualSectionId = db.sections.find((s) => s.classId === classId)?.id || sectionId;
+  // Remove existing class teacher assignment for this class
   db.teacherAssignments = db.teacherAssignments.filter(
-    (ta) => !(ta.classId === classId && ta.sectionId === sectionId && ta.isClassTeacher)
+    (ta) => !(ta.classId === classId && ta.isClassTeacher)
   );
   if (teacherId) {
     const newAssignment = {
       id: `assign-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       teacherId,
       classId,
-      sectionId,
+      sectionId: actualSectionId,
       subjectId: null,
       isClassTeacher: true,
     };
@@ -416,10 +417,12 @@ export async function createStudent(student: Student): Promise<Student> {
   if (db.students.some((s) => s.admissionNo.toLowerCase() === student.admissionNo.toLowerCase().trim())) {
     throw new Error(`Student with Admission No / S.R. No '${student.admissionNo}' already exists.`);
   }
-  db.students.push(student);
+  const actualSectionId = db.sections.find((s) => s.classId === student.classId)?.id || student.sectionId;
+  const studentToSave = { ...student, sectionId: actualSectionId };
+  db.students.push(studentToSave);
   await saveDb(db);
-  syncStudentToSupabase(student).catch(console.error);
-  return student;
+  syncStudentToSupabase(studentToSave).catch(console.error);
+  return studentToSave;
 }
 
 export async function updateStudent(id: string, updates: Partial<Student>): Promise<Student> {

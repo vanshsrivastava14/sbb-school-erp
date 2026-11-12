@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { getClasses, getDb, getCurrentAcademicSession } from "@/lib/db/store";
+import { unstable_noStore as noStore } from "next/cache";
+import { getClasses, getDb, getCurrentAcademicSession, invalidateDbCache } from "@/lib/db/store";
 import { FileText, Eye, Printer, Award, Search, CheckCircle2 } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminReportsListPage({
   searchParams,
 }: {
   searchParams: Promise<{ classId?: string; search?: string; sessionId?: string }>;
 }) {
+  noStore();
+  invalidateDbCache();
   const db = await getDb();
   const classes = await getClasses();
   const currentSession = await getCurrentAcademicSession();

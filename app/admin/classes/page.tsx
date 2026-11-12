@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import {
   getClasses,
   getSections,
@@ -6,10 +7,16 @@ import {
   getAllUsers,
   getTeacherAssignments,
   getClassSubjects,
+  invalidateDbCache,
 } from "@/lib/db/store";
 import ClassManagementClient from "@/components/classes/ClassManagementClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminClassesPage() {
+  noStore();
+  invalidateDbCache();
   const db = await getDb();
   const classes = await getClasses();
   const sections = await getSections();
