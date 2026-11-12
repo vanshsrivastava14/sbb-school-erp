@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   SchoolClass,
   Student,
@@ -9,6 +10,7 @@ import {
   ClassSubject,
   MarksEntry,
   ReportCard,
+  AcademicSession,
 } from "@/lib/db/types";
 import {
   approveClassMarksAction,
@@ -20,6 +22,7 @@ import {
   calculateOverallPercentage,
   getGradeFromPercentage,
 } from "@/lib/grading";
+import TeacherMarksEntryClient from "./TeacherMarksEntryClient";
 import {
   CheckCircle2,
   AlertCircle,
@@ -29,6 +32,8 @@ import {
   Layers,
   ArrowRight,
   Filter,
+  ClipboardEdit,
+  ListChecks,
 } from "lucide-react";
 
 interface AdminMarksReviewClientProps {
@@ -37,6 +42,10 @@ interface AdminMarksReviewClientProps {
   allMarks: MarksEntry[];
   classSubjects: (ClassSubject & { subject: Subject })[];
   reportCards: ReportCard[];
+  currentSession: AcademicSession;
+  initialClassId?: string;
+  initialStudentId?: string;
+  initialMode?: "review" | "entry";
 }
 
 export default function AdminMarksReviewClient({
@@ -45,10 +54,31 @@ export default function AdminMarksReviewClient({
   allMarks,
   classSubjects,
   reportCards,
+  currentSession,
+  initialClassId,
+  initialStudentId,
+  initialMode,
 }: AdminMarksReviewClientProps) {
-  const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || "");
+  const router = useRouter();
+  const [selectedClassId, setSelectedClassId] = useState<string>(initialClassId || classes[0]?.id || "");
+  const [activeTab, setActiveTab] = useState<"review" | "entry">(initialMode || "review");
+  const [editingStudentId, setEditingStudentId] = useState<string | undefined>(initialStudentId);
   const [isPending, startTransition] = useTransition();
   const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleOpenEntry = (studentId?: string) => {
+    if (studentId) {
+      setEditingStudentId(studentId);
+    }
+    setActiveTab("entry");
+  };
+
+  const handleSwitchTab = (tab: "review" | "entry") => {
+    setActiveTab(tab);
+    if (tab === "review") {
+      router.refresh();
+    }
+  };
 
   const studentsInClass = useMemo(() => {
     return allStudents.filter((s) => s.classId === selectedClassId && s.isActive);
@@ -125,14 +155,63 @@ export default function AdminMarksReviewClient({
 
   return (
     <div className="space-y-4">
-      {/* Top Controls */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-lg font-bold text-[#0f2537] font-serif">Examination Results & Marks Verification</h1>
-          <p className="text-xs text-slate-500">
-            Review teacher submissions, verify scores, approve results, and publish official report cards.
-          </p>
+      {/* Mode Switcher Tabs */}
+      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleSwitchTab("review")}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+              activeTab === "review"
+                ? "bg-[#0f2537] text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <ListChecks className="w-4 h-4" />
+            <span>Review & Publish Results</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSwitchTab("entry")}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+              activeTab === "entry"
+                ? "bg-[#0f2537] text-amber-300 shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <ClipboardEdit className="w-4 h-4" />
+            <span>Enter / Edit Marks</span>
+          </button>
         </div>
+
+        <span className="text-[11px] text-slate-500 px-2">
+          Session: <strong className="text-[#0f2537]">{currentSession.name}</strong>
+        </span>
+      </div>
+
+      {activeTab === "entry" ? (
+        <TeacherMarksEntryClient
+          assignedClasses={classes}
+          allStudents={allStudents}
+          classSubjects={classSubjects}
+          existingMarks={allMarks}
+          currentSession={currentSession}
+          initialClassId={selectedClassId}
+          initialStudentId={editingStudentId}
+          mode="admin"
+          basePath="/admin/marks"
+          reportBasePath="/admin/reports"
+        />
+      ) : (
+        <>
+          {/* Top Controls */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-lg font-bold text-[#0f2537] font-serif">Examination Results & Marks Verification</h1>
+              <p className="text-xs text-slate-500">
+                Review teacher submissions, enter or edit scores directly, approve results, and publish official report cards.
+              </p>
+            </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
@@ -213,7 +292,7 @@ export default function AdminMarksReviewClient({
                 <th className="py-3 px-3 text-center">Grade</th>
                 <th className="py-3 px-3 text-center">Rank</th>
                 <th className="py-3 px-3 text-center">Status</th>
-                <th className="py-3 px-3 text-right">Report Card</th>
+                <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -265,13 +344,23 @@ export default function AdminMarksReviewClient({
                       )}
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <Link
-                        href={`/admin/reports/${item.student.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded text-xs font-semibold transition"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-amber-700" />
-                        <span>View Card</span>
-                      </Link>
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEntry(item.student.id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-[#0f2537] text-[#0f2537] hover:text-white border border-slate-200 rounded text-xs font-semibold transition"
+                        >
+                          <ClipboardEdit className="w-3.5 h-3.5" />
+                          <span>Edit Marks</span>
+                        </button>
+                        <Link
+                          href={`/admin/reports/${item.student.id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded text-xs font-semibold transition"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-amber-700" />
+                          <span>View Card</span>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -280,6 +369,8 @@ export default function AdminMarksReviewClient({
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

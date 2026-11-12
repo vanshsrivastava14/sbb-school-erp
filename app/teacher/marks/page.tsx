@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { getSession } from "@/lib/auth/session";
 import {
   getDb,
@@ -6,14 +7,20 @@ import {
   getStudents,
   getClassSubjects,
   getCurrentAcademicSession,
+  invalidateDbCache,
 } from "@/lib/db/store";
 import TeacherMarksEntryClient from "@/components/marks/TeacherMarksEntryClient";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function TeacherMarksPage({
   searchParams,
 }: {
   searchParams: Promise<{ classId?: string; studentId?: string }>;
 }) {
+  noStore();
+  invalidateDbCache();
   const session = await getSession();
   const db = await getDb();
   const currentSession = await getCurrentAcademicSession();

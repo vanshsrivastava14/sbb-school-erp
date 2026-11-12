@@ -221,17 +221,20 @@ export async function syncMarksToSupabase(marks: MarksEntry[]): Promise<void> {
     annual_marks: m.annualMarks,
     co_scholastic_grade: m.coScholasticGrade,
     status: m.status,
-    entered_by: m.enteredByTeacherId,
-    submitted_at: m.submittedAt,
-    reviewed_by: m.reviewedByAdminId,
-    reviewed_at: m.reviewedAt,
+    entered_by: m.enteredByTeacherId || null,
+    submitted_at: m.submittedAt || null,
+    reviewed_by: m.reviewedByAdminId || null,
+    reviewed_at: m.reviewedAt || null,
     updated_at: m.updatedAt,
   }));
 
-  try {
-    await supabase.from("marks").upsert(rows, { onConflict: "student_id,subject_id,academic_session_id" });
-  } catch (err) {
-    console.error("Supabase marks sync error:", err);
+  const { error } = await supabase
+    .from("marks")
+    .upsert(rows, { onConflict: "student_id,subject_id,academic_session_id" });
+
+  if (error) {
+    console.error("Supabase marks sync error:", error);
+    throw new Error(`Failed to save marks to database: ${error.message}`);
   }
 }
 
@@ -256,10 +259,13 @@ export async function syncReportCardsToSupabase(cards: ReportCard[]): Promise<vo
     generated_at: rc.generatedAt,
   }));
 
-  try {
-    await supabase.from("report_cards").upsert(rows, { onConflict: "student_id,academic_session_id" });
-  } catch (err) {
-    console.error("Supabase report_cards sync error:", err);
+  const { error } = await supabase
+    .from("report_cards")
+    .upsert(rows, { onConflict: "student_id,academic_session_id" });
+
+  if (error) {
+    console.error("Supabase report_cards sync error:", error);
+    throw new Error(`Failed to save report card to database: ${error.message}`);
   }
 }
 

@@ -44,6 +44,9 @@ interface TeacherMarksEntryClientProps {
   currentSession: AcademicSession;
   initialClassId?: string;
   initialStudentId?: string;
+  mode?: "teacher" | "admin";
+  basePath?: string;
+  reportBasePath?: string;
 }
 
 export default function TeacherMarksEntryClient({
@@ -54,6 +57,9 @@ export default function TeacherMarksEntryClient({
   currentSession,
   initialClassId,
   initialStudentId,
+  mode = "teacher",
+  basePath = "/teacher/marks",
+  reportBasePath = "/teacher/reports",
 }: TeacherMarksEntryClientProps) {
   const router = useRouter();
   const [selectedClassId, setSelectedClassId] = useState<string>(
@@ -68,6 +74,18 @@ export default function TeacherMarksEntryClient({
     initialStudentId || studentsInClass[0]?.id || ""
   );
   const [studentSearch, setStudentSearch] = useState("");
+
+  useEffect(() => {
+    if (initialClassId && assignedClasses.some((c) => c.id === initialClassId)) {
+      setSelectedClassId(initialClassId);
+    }
+  }, [initialClassId, assignedClasses]);
+
+  useEffect(() => {
+    if (initialStudentId && allStudents.some((s) => s.id === initialStudentId)) {
+      setSelectedStudentId(initialStudentId);
+    }
+  }, [initialStudentId, allStudents]);
 
   const currentStudent = useMemo(() => {
     return studentsInClass.find((s) => s.id === selectedStudentId) || studentsInClass[0] || null;
@@ -128,7 +146,8 @@ export default function TeacherMarksEntryClient({
     } else {
       setSelectedStudentId("");
     }
-    router.push(`/teacher/marks?classId=${newClassId}`);
+    const query = mode === "admin" ? `mode=entry&classId=${newClassId}` : `classId=${newClassId}`;
+    router.push(`${basePath}?${query}`);
   };
 
   const handleMarkChange = (
@@ -189,7 +208,7 @@ export default function TeacherMarksEntryClient({
   }, [currentStudent, scholasticSubjects, marksState]);
 
   // Save marks for current student
-  const handleSaveMarks = (status: "draft" | "submitted") => {
+  const handleSaveMarks = (status: "draft" | "submitted" | "approved") => {
     if (!currentStudent) return;
     setNotification(null);
 
@@ -249,6 +268,19 @@ export default function TeacherMarksEntryClient({
     });
   };
 
+  const studentStatusMap = useMemo(() => {
+    const map: Record<string, "draft" | "submitted" | "approved"> = {};
+    existingMarks.forEach((m) => {
+      if (m.academicSessionId !== currentSession.id) return;
+      const cur = map[m.studentId];
+      const st = m.status === "published" ? "approved" : m.status;
+      if (st === "approved" || (!cur && (st === "submitted" || st === "draft")) || (cur === "draft" && st === "submitted")) {
+        map[m.studentId] = st;
+      }
+    });
+    return map;
+  }, [existingMarks, currentSession.id]);
+
   const filteredStudents = studentsInClass.filter((s) => {
     if (!studentSearch.trim()) return true;
     const q = studentSearch.toLowerCase();
@@ -260,9 +292,13 @@ export default function TeacherMarksEntryClient({
       {/* Top Banner & Class Selector */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-lg font-bold text-[#0f2537] font-serif">Teacher Marks Entry & Evaluation</h1>
+          <h1 className="text-lg font-bold text-[#0f2537] font-serif">
+            {mode === "admin" ? "Administrator Marks Entry & Editing" : "Teacher Marks Entry & Evaluation"}
+          </h1>
           <p className="text-xs text-slate-500">
-            Select student, enter examination scores with instant calculations, and submit for admin publication.
+            {mode === "admin"
+              ? "Select any class and student to enter or edit scholastic & co-scholastic marks and approve directly."
+              : "Select student, enter examination scores with instant calculations, and submit for admin publication."}
           </p>
         </div>
 
@@ -282,15 +318,17 @@ export default function TeacherMarksEntryClient({
             </select>
           </div>
 
-          <button
-            onClick={handleSubmitClass}
-            disabled={isPending}
-            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition ml-auto disabled:opacity-50"
-            title="Submit all marks in this class for administrator approval"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Submit Class Results</span>
-          </button>
+          {mode !== "admin" && (
+            <button
+              onClick={handleSubmitClass}
+              disabled={isPending}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition ml-auto disabled:opacity-50"
+              title="Submit all marks in this class for administrator approval"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Submit Class Results</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -345,6 +383,7 @@ export default function TeacherMarksEntryClient({
             ) : (
               filteredStudents.map((s) => {
                 const isSelected = s.id === currentStudent?.id;
+                const savedStatus = studentStatusMap[s.id];
                 return (
                   <button
                     key={s.id}
@@ -355,24 +394,46 @@ export default function TeacherMarksEntryClient({
                         : "hover:bg-slate-50 text-slate-700"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                        className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs ${
                           isSelected ? "bg-amber-400 text-[#0f2537]" : "bg-slate-100 text-slate-600"
                         }`}
                       >
                         {s.rollNo}
                       </div>
-                      <div>
-                        <p className={`text-xs font-bold uppercase truncate max-w-[150px] ${isSelected ? "text-white" : "text-slate-800"}`}>
+                      <div className="min-w-0">
+                        <p className={`text-xs font-bold uppercase truncate max-w-[140px] ${isSelected ? "text-white" : "text-slate-800"}`}>
                           {s.studentName}
                         </p>
-                        <p className={`text-[10px] ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
-                          S.R. No: {s.admissionNo}
-                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <p className={`text-[10px] ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+                            S.R. {s.admissionNo}
+                          </p>
+                          {savedStatus && (
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                                savedStatus === "approved"
+                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  : savedStatus === "submitted"
+                                  ? "bg-sky-500/20 text-sky-300"
+                                  : "bg-amber-500/20 text-amber-300"
+                              } ${
+                                !isSelected &&
+                                (savedStatus === "approved"
+                                  ? "!bg-emerald-50 !text-emerald-700 border border-emerald-200"
+                                  : savedStatus === "submitted"
+                                  ? "!bg-sky-50 !text-sky-700 border border-sky-200"
+                                  : "!bg-amber-50 !text-amber-700 border border-amber-200")
+                              }`}
+                            >
+                              {savedStatus}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <ChevronRight className={`w-4 h-4 ${isSelected ? "text-amber-400" : "text-slate-300"}`} />
+                    <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isSelected ? "text-amber-400" : "text-slate-300"}`} />
                   </button>
                 );
               })
@@ -405,7 +466,7 @@ export default function TeacherMarksEntryClient({
 
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/teacher/reports/${currentStudent.id}`}
+                    href={`${reportBasePath}/${currentStudent.id}`}
                     className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
                   >
                     <FileText className="w-3.5 h-3.5 text-amber-700" />
@@ -609,14 +670,25 @@ export default function TeacherMarksEntryClient({
                     <span>Save Draft</span>
                   </button>
 
-                  <button
-                    onClick={() => handleSaveMarks("submitted")}
-                    disabled={isPending}
-                    className="px-4 py-2 bg-[#0f2537] hover:bg-[#183e60] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition shadow-xs disabled:opacity-50"
-                  >
-                    <Send className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Save & Mark Complete</span>
-                  </button>
+                  {mode === "admin" ? (
+                    <button
+                      onClick={() => handleSaveMarks("approved")}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-[#0f2537] hover:bg-[#183e60] text-amber-300 text-xs font-bold rounded-lg flex items-center gap-1.5 transition shadow-xs border border-amber-400/40 disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Save & Approve Marks</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleSaveMarks("submitted")}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-[#0f2537] hover:bg-[#183e60] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition shadow-xs disabled:opacity-50"
+                    >
+                      <Send className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Save & Mark Complete</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </>

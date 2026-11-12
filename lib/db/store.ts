@@ -502,10 +502,13 @@ export async function saveMarksEntries(
     ut2Marks?: number | null;
     annualMarks?: number | null;
     coScholasticGrade?: string | null;
-    status: "draft" | "submitted";
+    status: "draft" | "submitted" | "approved";
   }[],
-  teacherId: string
+  actorId: string
 ): Promise<void> {
+  if (isSupabaseConfigured) {
+    invalidateDbCache();
+  }
   const db = await getDb();
   const now = new Date().toISOString();
 
@@ -526,8 +529,13 @@ export async function saveMarksEntries(
         annualMarks: entry.annualMarks !== undefined ? entry.annualMarks : db.marks[idx].annualMarks,
         coScholasticGrade: entry.coScholasticGrade !== undefined ? entry.coScholasticGrade : db.marks[idx].coScholasticGrade,
         status: entry.status,
-        enteredByTeacherId: teacherId,
-        submittedAt: entry.status === "submitted" ? now : db.marks[idx].submittedAt,
+        enteredByTeacherId: db.marks[idx].enteredByTeacherId || actorId,
+        submittedAt:
+          entry.status === "submitted" || entry.status === "approved"
+            ? db.marks[idx].submittedAt || now
+            : db.marks[idx].submittedAt,
+        reviewedByAdminId: entry.status === "approved" ? actorId : db.marks[idx].reviewedByAdminId,
+        reviewedAt: entry.status === "approved" ? now : db.marks[idx].reviewedAt,
         updatedAt: now,
       };
     } else {
@@ -542,19 +550,25 @@ export async function saveMarksEntries(
         annualMarks: entry.annualMarks ?? null,
         coScholasticGrade: entry.coScholasticGrade ?? null,
         status: entry.status,
-        enteredByTeacherId: teacherId,
-        submittedAt: entry.status === "submitted" ? now : null,
+        enteredByTeacherId: actorId,
+        submittedAt: entry.status === "submitted" || entry.status === "approved" ? now : null,
+        reviewedByAdminId: entry.status === "approved" ? actorId : null,
+        reviewedAt: entry.status === "approved" ? now : null,
         updatedAt: now,
       });
     }
   }
 
+  const studentIds = Array.from(new Set(entries.map((e) => e.studentId)));
+  const sessionId = entries[0]?.academicSessionId || "session-2026-2027";
+  const affectedMarks = db.marks.filter(
+    (m) => studentIds.includes(m.studentId) && m.academicSessionId === sessionId
+  );
+
+  await syncMarksToSupabase(affectedMarks);
   await saveDb(db);
 
   // Auto-compile report cards for the affected students so they reflect marks immediately
-  const studentIds = Array.from(new Set(entries.map((e) => e.studentId)));
-  const sessionId = entries[0]?.academicSessionId || "session-2025-2026";
-  syncMarksToSupabase(db.marks.filter((m) => studentIds.includes(m.studentId))).catch(console.error);
   for (const sId of studentIds) {
     try {
       await compileStudentReportCard(sId, sessionId);
@@ -562,6 +576,7 @@ export async function saveMarksEntries(
       // Ignore if student has incomplete data
     }
   }
+  invalidateDbCache();
 }
 
 export async function submitClassMarks(
@@ -571,9 +586,11 @@ export async function submitClassMarks(
   teacherId: string
 ): Promise<void> {
   const db = await getDb();
-  const students = await getStudents({ classId, sectionId, sessionId });
+  const sectionFilter = sectionId && sectionId !== "sec-a" ? sectionId : undefined;
+  const students = await getStudents({ classId, sectionId: sectionFilter, sessionId });
   const studentIds = new Set(students.map((s) => s.id));
   const now = new Date().toISOString();
+  const updatedMarks: MarksEntry[] = [];
 
   for (const m of db.marks) {
     if (studentIds.has(m.studentId) && m.academicSessionId === sessionId) {
@@ -582,10 +599,13 @@ export async function submitClassMarks(
         m.submittedAt = now;
         m.enteredByTeacherId = teacherId;
         m.updatedAt = now;
+        updatedMarks.push(m);
       }
     }
   }
 
+  await syncMarksToSupabase(updatedMarks);
+  invalidateDbCache();
   await saveDb(db);
 }
 
@@ -596,9 +616,11 @@ export async function approveClassMarks(
   adminId: string
 ): Promise<void> {
   const db = await getDb();
-  const students = await getStudents({ classId, sectionId, sessionId });
+  const sectionFilter = sectionId && sectionId !== "sec-a" ? sectionId : undefined;
+  const students = await getStudents({ classId, sectionId: sectionFilter, sessionId });
   const studentIds = new Set(students.map((s) => s.id));
   const now = new Date().toISOString();
+  const updatedMarks: MarksEntry[] = [];
 
   for (const m of db.marks) {
     if (studentIds.has(m.studentId) && m.academicSessionId === sessionId) {
@@ -607,10 +629,13 @@ export async function approveClassMarks(
         m.reviewedByAdminId = adminId;
         m.reviewedAt = now;
         m.updatedAt = now;
+        updatedMarks.push(m);
       }
     }
   }
 
+  await syncMarksToSupabase(updatedMarks);
+  invalidateDbCache();
   await saveDb(db);
 }
 
@@ -733,8 +758,8 @@ export async function compileStudentReportCard(
     db.reportCards.push(reportCard);
   }
 
+  await syncReportCardsToSupabase([reportCard]);
   await saveDb(db);
-  syncReportCardsToSupabase([reportCard]).catch(console.error);
   return reportCard;
 }
 
@@ -745,7 +770,8 @@ export async function publishClassReportCards(
   adminId: string
 ): Promise<number> {
   const db = await getDb();
-  const students = await getStudents({ classId, sectionId, sessionId });
+  const sectionFilter = sectionId && sectionId !== "sec-a" ? sectionId : undefined;
+  const students = await getStudents({ classId, sectionId: sectionFilter, sessionId });
   let count = 0;
 
   for (const student of students) {
@@ -756,15 +782,19 @@ export async function publishClassReportCards(
   // Also mark all marks entries as published
   const studentIds = new Set(students.map((s) => s.id));
   const now = new Date().toISOString();
+  const updatedMarks: MarksEntry[] = [];
   for (const m of db.marks) {
     if (studentIds.has(m.studentId) && m.academicSessionId === sessionId) {
       m.status = "published";
       m.reviewedByAdminId = adminId;
       m.reviewedAt = now;
       m.updatedAt = now;
+      updatedMarks.push(m);
     }
   }
 
+  await syncMarksToSupabase(updatedMarks);
+  invalidateDbCache();
   await saveDb(db);
   return count;
 }

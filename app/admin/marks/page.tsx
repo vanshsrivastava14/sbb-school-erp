@@ -1,7 +1,18 @@
-import { getClasses, getDb, getCurrentAcademicSession, getClassSubjects } from "@/lib/db/store";
+import { unstable_noStore as noStore } from "next/cache";
+import { getClasses, getDb, getCurrentAcademicSession, getClassSubjects, invalidateDbCache } from "@/lib/db/store";
 import AdminMarksReviewClient from "@/components/marks/AdminMarksReviewClient";
 
-export default async function AdminMarksPage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function AdminMarksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ classId?: string; studentId?: string; mode?: string }>;
+}) {
+  noStore();
+  invalidateDbCache();
+  const params = await searchParams;
   const db = await getDb();
   const classes = await getClasses();
   const currentSession = await getCurrentAcademicSession();
@@ -23,6 +34,10 @@ export default async function AdminMarksPage() {
       allMarks={allMarks}
       classSubjects={classSubjectsWithDetails}
       reportCards={reportCards}
+      currentSession={currentSession}
+      initialClassId={params.classId}
+      initialStudentId={params.studentId}
+      initialMode={params.mode === "entry" ? "entry" : "review"}
     />
   );
 }

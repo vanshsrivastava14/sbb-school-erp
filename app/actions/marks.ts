@@ -30,7 +30,7 @@ export async function saveMarksAction(
     ut2Marks?: number | null;
     annualMarks?: number | null;
     coScholasticGrade?: string | null;
-    status: "draft" | "submitted";
+    status: "draft" | "submitted" | "approved";
   }[]
 ): Promise<MarksActionResult> {
   const session = await getSession();
@@ -38,8 +38,13 @@ export async function saveMarksAction(
     return { error: "Please log in." };
   }
 
+  const sanitizedEntries = entries.map((e) => ({
+    ...e,
+    status: e.status === "approved" && session.role !== "admin" ? ("submitted" as const) : e.status,
+  }));
+
   try {
-    await saveMarksEntries(entries, session.userId);
+    await saveMarksEntries(sanitizedEntries, session.userId);
 
     await logAudit(
       session.userId,
@@ -47,11 +52,14 @@ export async function saveMarksAction(
       "SAVE_MARKS",
       "marks",
       "batch",
-      `Saved ${entries.length} mark entries with status: ${entries[0]?.status || "draft"}`
+      `Saved ${sanitizedEntries.length} mark entries with status: ${sanitizedEntries[0]?.status || "draft"}`
     );
 
     revalidatePath("/teacher/marks");
     revalidatePath("/admin/marks");
+    revalidatePath("/admin/reports");
+    revalidatePath("/teacher/reports");
+    revalidatePath("/teacher/submissions");
     return { success: true, message: "Marks saved successfully." };
   } catch (err: any) {
     return { error: err.message || "Failed to save marks." };
