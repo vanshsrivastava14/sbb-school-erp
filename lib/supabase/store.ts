@@ -334,21 +334,109 @@ export async function syncTeacherAssignmentToSupabase(ta: TeacherAssignment): Pr
   }
 }
 
+function mapSupabaseUser(u: {
+  id: string;
+  email: string;
+  password_hash: string;
+  full_name: string;
+  role: "admin" | "teacher";
+  phone: string | null;
+  is_active: boolean | null;
+  created_at: string;
+  updated_at?: string | null;
+}): User {
+  return {
+    id: u.id,
+    email: u.email,
+    passwordHash: u.password_hash,
+    fullName: u.full_name,
+    role: u.role,
+    phone: u.phone || undefined,
+    isActive: u.is_active ?? true,
+    createdAt: u.created_at,
+    updatedAt: u.updated_at || undefined,
+  };
+}
+
+export async function fetchUserByEmailFromSupabase(email: string): Promise<User | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email, password_hash, full_name, role, phone, is_active, created_at, updated_at")
+    .ilike("email", email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (error) {
+    console.error("Supabase fetchUserByEmail error:", error);
+    throw new Error(`Database lookup failed: ${error.message}`);
+  }
+
+  return data ? mapSupabaseUser(data) : null;
+}
+
+export async function fetchUserByIdFromSupabase(id: string): Promise<User | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email, password_hash, full_name, role, phone, is_active, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Supabase fetchUserById error:", error);
+    throw new Error(`Database lookup failed: ${error.message}`);
+  }
+
+  return data ? mapSupabaseUser(data) : null;
+}
+
+export async function fetchAllUsersFromSupabase(): Promise<User[] | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email, password_hash, full_name, role, phone, is_active, created_at, updated_at")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Supabase fetchAllUsers error:", error);
+    return null;
+  }
+
+  return (data || []).map(mapSupabaseUser);
+}
+
 export async function syncUserToSupabase(user: User): Promise<void> {
   if (!isSupabaseConfigured || !supabase) return;
 
-  try {
-    await supabase.from("users").upsert({
+  const { error } = await supabase.from("users").upsert(
+    {
       id: user.id,
-      email: user.email,
+      email: user.email.trim().toLowerCase(),
       password_hash: user.passwordHash,
       full_name: user.fullName,
       role: user.role,
       phone: user.phone || null,
       is_active: user.isActive,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "id" });
-  } catch (err) {
-    console.error("Supabase user sync error:", err);
+      updated_at: user.updatedAt || new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+
+  if (error) {
+    console.error("Supabase user sync error:", error);
+    throw new Error(`Failed to save credentials to database: ${error.message}`);
+  }
+}
+
+export async function deleteUserFromSupabase(userId: string): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) return;
+
+  const { error } = await supabase.from("users").delete().eq("id", userId);
+  if (error) {
+    console.error("Supabase user delete error:", error);
+    throw new Error(`Failed to delete user from database: ${error.message}`);
   }
 }

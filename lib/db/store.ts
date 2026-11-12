@@ -21,7 +21,13 @@ import {
   getGradeFromPercentage,
   calculateClassRanks,
 } from "../grading";
+import { unstable_noStore as noStore } from "next/cache";
 import { isSupabaseConfigured } from "../supabase/client";
+import {
+  fetchUserByEmailFromSupabase,
+  fetchUserByIdFromSupabase,
+  fetchAllUsersFromSupabase,
+} from "../supabase/store";
 import {
   fetchFromSupabase,
   syncMarksToSupabase,
@@ -51,8 +57,16 @@ const DB_FILE = path.join(DATA_DIR, "sbb_erp_database.json");
 
 let memoryDb: DatabaseState | null = null;
 
+let memoryDbLoadedAt = 0;
+const MEMORY_DB_TTL_MS = 15_000;
+
+export function invalidateDbCache(): void {
+  memoryDbLoadedAt = 0;
+}
+
 export async function getDb(): Promise<DatabaseState> {
-  if (memoryDb) {
+  const isCacheFresh = !isSupabaseConfigured || Date.now() - memoryDbLoadedAt < MEMORY_DB_TTL_MS;
+  if (memoryDb && isCacheFresh) {
     return memoryDb;
   }
 
@@ -61,6 +75,7 @@ export async function getDb(): Promise<DatabaseState> {
     const cloudDb = await fetchFromSupabase();
     if (cloudDb && cloudDb.classes.length > 0) {
       memoryDb = cloudDb;
+      memoryDbLoadedAt = Date.now();
       return memoryDb;
     }
   }
@@ -118,16 +133,49 @@ export async function saveDb(state: DatabaseState): Promise<void> {
 // USER OPERATIONS
 // -------------------------------------------------------------
 export async function getUserByEmail(email: string): Promise<User | null> {
+  noStore();
+  if (isSupabaseConfigured) {
+    const cloudUser = await fetchUserByEmailFromSupabase(email);
+    if (memoryDb) {
+      if (cloudUser) {
+        const idx = memoryDb.users.findIndex((u) => u.id === cloudUser.id);
+        if (idx >= 0) memoryDb.users[idx] = cloudUser;
+        else memoryDb.users.push(cloudUser);
+      }
+    }
+    return cloudUser;
+  }
+
   const db = await getDb();
   return db.users.find((u) => u.email.toLowerCase() === email.toLowerCase().trim()) || null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
+  noStore();
+  if (isSupabaseConfigured) {
+    const cloudUser = await fetchUserByIdFromSupabase(id);
+    if (memoryDb && cloudUser) {
+      const idx = memoryDb.users.findIndex((u) => u.id === cloudUser.id);
+      if (idx >= 0) memoryDb.users[idx] = cloudUser;
+      else memoryDb.users.push(cloudUser);
+    }
+    return cloudUser;
+  }
+
   const db = await getDb();
   return db.users.find((u) => u.id === id) || null;
 }
 
 export async function getAllUsers(): Promise<User[]> {
+  noStore();
+  if (isSupabaseConfigured) {
+    const cloudUsers = await fetchAllUsersFromSupabase();
+    if (cloudUsers) {
+      if (memoryDb) memoryDb.users = cloudUsers;
+      return cloudUsers;
+    }
+  }
+
   const db = await getDb();
   return db.users;
 }
@@ -144,8 +192,18 @@ export async function createUser(user: User): Promise<User> {
 }
 
 export async function updateUser(id: string, updates: Partial<User>): Promise<User> {
+  if (isSupabaseConfigured) {
+    invalidateDbCache();
+  }
   const db = await getDb();
-  const idx = db.users.findIndex((u) => u.id === id);
+  let idx = db.users.findIndex((u) => u.id === id);
+  if (idx === -1 && isSupabaseConfigured) {
+    const cloudUser = await fetchUserByIdFromSupabase(id);
+    if (cloudUser) {
+      db.users.push(cloudUser);
+      idx = db.users.length - 1;
+    }
+  }
   if (idx === -1) {
     throw new Error(`User not found.`);
   }
@@ -160,14 +218,17 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
     }
   }
 
-  db.users[idx] = {
+  const updatedUser: User = {
     ...db.users[idx],
     ...updates,
     updatedAt: new Date().toISOString(),
   };
 
+  await syncUserToSupabase(updatedUser);
+
+  db.users[idx] = updatedUser;
+  invalidateDbCache();
   await saveDb(db);
-  syncUserToSupabase(db.users[idx]).catch(console.error);
   return db.users[idx];
 }
 
@@ -244,8 +305,9 @@ export async function setClassTeacher(classId: string, sectionId: string, teache
       isClassTeacher: true,
     };
     db.teacherAssignments.push(newAssignment);
-    syncTeacherAssignmentToSupabase(newAssignment).catch(console.error);
+    await syncTeacherAssignmentToSupabase(newAssignment);
   }
+  invalidateDbCache();
   await saveDb(db);
 }
 

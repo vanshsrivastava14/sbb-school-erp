@@ -6,6 +6,7 @@ import {
   createTeacherAction,
   assignTeacherAction,
   updateTeacherAction,
+  updateAdminCredentialsAction,
   deleteTeacherAction,
 } from "@/app/actions/teachers";
 import {
@@ -32,6 +33,7 @@ interface TeacherManagementClientProps {
   classes: SchoolClass[];
   sections: Section[];
   assignments: TeacherAssignment[];
+  currentAdmin?: User | null;
 }
 
 export default function TeacherManagementClient({
@@ -39,18 +41,22 @@ export default function TeacherManagementClient({
   classes,
   sections,
   assignments,
+  currentAdmin,
 }: TeacherManagementClientProps) {
   const [isPending, startTransition] = useTransition();
   const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [selectedTeacherForAssign, setSelectedTeacherForAssign] = useState<string>("");
 
   // Editing Teacher State
   const [editingTeacher, setEditingTeacher] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showAdminPasswords, setShowAdminPasswords] = useState(false);
 
   const filteredTeachers = teachers.filter((t) => {
     if (!search) return true;
@@ -90,14 +96,33 @@ export default function TeacherManagementClient({
 
   const handleUpdateTeacher = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setModalError(null);
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       const res = await updateTeacherAction(formData);
       if (res.error) {
+        setModalError(res.error);
         setNotification({ type: "error", text: res.error });
       } else {
         setNotification({ type: "success", text: res.message || "Teacher account updated successfully!" });
         setEditingTeacher(null);
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleUpdateAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setModalError(null);
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const res = await updateAdminCredentialsAction(formData);
+      if (res.error) {
+        setModalError(res.error);
+        setNotification({ type: "error", text: res.error });
+      } else {
+        setNotification({ type: "success", text: res.message || "Admin credentials updated successfully!" });
+        setIsAdminModalOpen(false);
         window.location.reload();
       }
     });
@@ -131,7 +156,20 @@ export default function TeacherManagementClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {currentAdmin && (
+            <button
+              onClick={() => {
+                setModalError(null);
+                setShowAdminPasswords(false);
+                setIsAdminModalOpen(true);
+              }}
+              className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin Password &amp; Login</span>
+            </button>
+          )}
           <button
             onClick={() => setIsCreateOpen(true)}
             className="px-3.5 py-2 bg-[#0f2537] hover:bg-[#183e60] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition shadow-xs"
@@ -299,12 +337,22 @@ export default function TeacherManagementClient({
                 </div>
               </div>
               <button
-                onClick={() => setEditingTeacher(null)}
+                onClick={() => {
+                  setEditingTeacher(null);
+                  setModalError(null);
+                }}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {modalError && (
+              <div className="mb-3 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleUpdateTeacher} className="space-y-3.5 text-xs">
               <input type="hidden" name="teacherId" value={editingTeacher.id} />
@@ -352,6 +400,7 @@ export default function TeacherManagementClient({
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
+                  autoComplete="new-password"
                   placeholder="Enter new password (min. 6 chars) to reset..."
                   className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
                 />
@@ -572,6 +621,138 @@ export default function TeacherManagementClient({
                   className="px-3.5 py-1.5 bg-[#0f2537] hover:bg-[#183e60] text-white font-semibold rounded-lg text-xs"
                 >
                   {isPending ? "Assigning..." : "Save Assignment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN CREDENTIALS & PASSWORD MODAL */}
+      {isAdminModalOpen && currentAdmin && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Admin Account &amp; Password</h3>
+                  <p className="text-[11px] text-slate-500">Update administrator login username and password</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsAdminModalOpen(false);
+                  setModalError(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {modalError && (
+              <div className="mb-3 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateAdmin} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Admin Display Name *</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  defaultValue={currentAdmin.fullName}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Admin Login Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  defaultValue={currentAdmin.email}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg text-xs font-mono focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  name="phone"
+                  defaultValue={currentAdmin.phone || ""}
+                  placeholder="Optional"
+                  className="w-full p-2.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Current Admin Password *</label>
+                <input
+                  type={showAdminPasswords ? "text" : "password"}
+                  name="currentPassword"
+                  required
+                  autoComplete="current-password"
+                  placeholder="Enter current password to confirm..."
+                  className="w-full p-2.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold">
+                    New Admin Password <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPasswords(!showAdminPasswords)}
+                    className="text-[11px] text-slate-500 hover:text-slate-700 flex items-center gap-1"
+                  >
+                    {showAdminPasswords ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    <span>{showAdminPasswords ? "Hide" : "Show"}</span>
+                  </button>
+                </div>
+                <input
+                  type={showAdminPasswords ? "text" : "password"}
+                  name="newPassword"
+                  autoComplete="new-password"
+                  placeholder="Enter new password (min. 6 chars)..."
+                  className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
+                />
+                <input
+                  type={showAdminPasswords ? "text" : "password"}
+                  name="confirmPassword"
+                  autoComplete="new-password"
+                  placeholder="Confirm new password..."
+                  className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-[#0f2537] focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAdminModalOpen(false);
+                    setModalError(null);
+                  }}
+                  className="px-3.5 py-2 text-slate-600 hover:bg-slate-100 font-semibold rounded-lg text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="px-4 py-2 bg-[#0f2537] hover:bg-[#183e60] text-white font-semibold rounded-lg text-xs transition shadow-xs disabled:opacity-50"
+                >
+                  {isPending ? "Saving..." : "Update Admin Account"}
                 </button>
               </div>
             </form>

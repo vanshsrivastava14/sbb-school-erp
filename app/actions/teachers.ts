@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth/session";
+import { getSession, createSessionCookie } from "@/lib/auth/session";
 import { createUser, updateUser, deleteUser, assignTeacher, setClassTeacher, logAudit, getAllUsers, getTeacherAssignments } from "@/lib/db/store";
-import { hashPassword } from "@/lib/auth/passwords";
+import { hashPassword, verifyPassword } from "@/lib/auth/passwords";
+import { getUserById } from "@/lib/db/store";
 import { User, TeacherAssignment } from "@/lib/db/types";
 
 export async function createTeacherAction(formData: FormData) {
@@ -95,6 +96,88 @@ export async function assignTeacherAction(formData: FormData) {
   }
 }
 
+export async function updateAdminCredentialsAction(formData: FormData) {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return { error: "Unauthorized." };
+  }
+
+  const currentPassword = (formData.get("currentPassword") as string) || "";
+  const fullName = (formData.get("fullName") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const phone = (formData.get("phone") as string)?.trim();
+  const newPassword = (formData.get("newPassword") as string)?.trim();
+  const confirmPassword = (formData.get("confirmPassword") as string)?.trim();
+
+  if (!currentPassword) {
+    return { error: "Current admin password is required to save credential changes." };
+  }
+  if (!fullName || !email) {
+    return { error: "Admin name and login email are required." };
+  }
+  if (newPassword) {
+    if (newPassword.length < 6) {
+      return { error: "New password must be at least 6 characters long." };
+    }
+    if (newPassword !== confirmPassword) {
+      return { error: "New password and confirmation do not match." };
+    }
+  }
+
+  try {
+    const adminUser = await getUserById(session.userId);
+    if (!adminUser) {
+      return { error: "Admin account record not found." };
+    }
+
+    const validCurrent = await verifyPassword(currentPassword, adminUser.passwordHash);
+    if (!validCurrent) {
+      return { error: "Current admin password is incorrect." };
+    }
+
+    const updates: Partial<User> = {
+      fullName,
+      email,
+      phone: phone || undefined,
+    };
+
+    if (newPassword) {
+      updates.passwordHash = await hashPassword(newPassword);
+    }
+
+    const updatedAdmin = await updateUser(adminUser.id, updates);
+
+    await createSessionCookie({
+      id: updatedAdmin.id,
+      email: updatedAdmin.email,
+      fullName: updatedAdmin.fullName,
+      role: updatedAdmin.role,
+    });
+
+    await logAudit(
+      session.userId,
+      updatedAdmin.fullName,
+      "UPDATE_ADMIN_CREDENTIALS",
+      "users",
+      adminUser.id,
+      `Updated admin account: ${fullName} (${email})${newPassword ? " [Password Changed]" : ""}`
+    );
+
+    revalidatePath("/admin/teachers");
+    revalidatePath("/admin");
+    revalidatePath("/login");
+    revalidatePath("/");
+    return {
+      success: true,
+      message: newPassword
+        ? "Admin login credentials and password updated successfully."
+        : "Admin account details updated successfully.",
+    };
+  } catch (err: any) {
+    return { error: err.message || "Failed to update admin credentials." };
+  }
+}
+
 export async function updateTeacherAction(formData: FormData) {
   const session = await getSession();
   if (!session || session.role !== "admin") {
@@ -117,7 +200,7 @@ export async function updateTeacherAction(formData: FormData) {
     const updates: Partial<User> = {
       fullName,
       email,
-      phone: phone || "9451275030",
+      phone: phone || undefined,
       isActive,
     };
 
@@ -145,7 +228,15 @@ export async function updateTeacherAction(formData: FormData) {
     );
 
     revalidatePath("/admin/teachers");
-    return { success: true, message: `Teacher account for ${fullName} updated successfully.` };
+    revalidatePath("/login");
+    revalidatePath("/teacher");
+    revalidatePath("/");
+    return {
+      success: true,
+      message: password
+        ? `Account and password for ${fullName} updated successfully.`
+        : `Teacher account for ${fullName} updated successfully.`,
+    };
   } catch (err: any) {
     return { error: err.message || "Failed to update teacher account." };
   }
