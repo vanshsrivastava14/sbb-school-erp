@@ -45,7 +45,7 @@ export default function OfficialReportCard({
   coScholasticSubjects,
   marks,
   reportCard,
-  teacherName = "Swati",
+  teacherName: _teacherName,
   onUpdateMetadata,
   backHref,
 }: OfficialReportCardProps) {
@@ -618,32 +618,11 @@ export default function OfficialReportCard({
               {/* 7. SIGNATURES SECTION */}
               <div className="relative z-10 border border-slate-700 bg-white">
                 <div className="grid grid-cols-3 text-center text-[10px] font-bold text-slate-800 divide-x divide-slate-700">
-                  {/* Parent's Signature */}
-                  <div className="p-2 pt-6 flex flex-col justify-end">
-                    <div className="border-t border-slate-400 pt-1">
-                      Parent&apos;s Signature
+                  {["Parent's Signature", "Class Teacher's Signature", "Principal"].map((label) => (
+                    <div key={label} className="p-2 pt-9 flex flex-col justify-end">
+                      <div className="border-t border-slate-400 pt-1">{label}</div>
                     </div>
-                  </div>
-
-                  {/* Class Teacher's Signature */}
-                  <div className="p-2 pt-2 flex flex-col justify-end items-center">
-                    <span className="font-serif italic text-base text-blue-900 pb-0.5">
-                      {teacherName}
-                    </span>
-                    <div className="border-t border-slate-400 pt-1 w-full">
-                      Class Teacher&apos;s Signature
-                    </div>
-                  </div>
-
-                  {/* Principal's Signature */}
-                  <div className="p-2 pt-2 flex flex-col justify-end items-center">
-                    <span className="font-serif italic text-base text-slate-800 pb-0.5">
-                      Principal
-                    </span>
-                    <div className="border-t border-slate-400 pt-1 w-full">
-                      Principal
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
